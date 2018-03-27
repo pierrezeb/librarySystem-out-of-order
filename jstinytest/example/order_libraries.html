@@ -1,0 +1,82 @@
+<script src="../tinytest.js"></script>
+<script src="order_libraries.js"></script>
+
+
+<script>
+
+
+tests({
+  'it should load a library without dependency': function() {
+    librarySystem('breads', [], function (){ return 'breadLibrary' })
+  eq(libraryStorage.breads,'breadLibrary')
+
+  deleteLibrarySystem();
+
+
+  },
+  'it should retrieve a library without dependency': function() {
+  librarySystem('breads', [], function (){ return {breads:'breadLibrary'} })
+  eq(librarySystem('breads').breads,'breadLibrary')
+
+  deleteLibrarySystem();
+
+
+  },
+  'it should load a library with dependencies to other libraries IN ORDER': function() {
+      librarySystem('breads', [], function (){ return 'breadLibrary' });
+      librarySystem('fillings', [], function (){ return 'fillingsLibrary' });
+      librarySystem('sandwich', ['breads', 'fillings'], function (breads, fillings){ return breads + ' ' + fillings });
+
+
+      eq(libraryStorage.sandwich,'breadLibrary fillingsLibrary');
+
+      deleteLibrarySystem();
+    },
+
+  'it should retrieve a library with dependencies to other libraries IN ORDER': function() {
+    librarySystem('breads', [], function (){ return 'breadLibrary' });
+    librarySystem('fillings', [], function (){ return 'fillingsLibrary' });
+    librarySystem('sandwich', ['breads', 'fillings'], function (breads, fillings){ return breads + ' '+ fillings });
+    eq(librarySystem('sandwich'),'breadLibrary fillingsLibrary');
+
+    deleteLibrarySystem();
+  },
+
+    'it should load a library with dependencies to other libraries OUT OF ORDER': function() {
+
+      librarySystem('sandwich', ['breads', 'fillings'], function (breads, fillings){ return breads.breads + ' '+ fillings.fillings });
+      librarySystem('breads', [], function (){ return {breads:'breadLibrary'} });
+      librarySystem('fillings', [], function (){ return {fillings:'fillingsLibrary'} });
+        eq(libraryStorage.sandwich,'breadLibrary fillingsLibrary');
+        deleteLibrarySystem();
+    },
+    'it should retrieve a library with dependencies to other libraries OUT OF ORDER': function() {
+
+      librarySystem('sandwich', ['breads', 'fillings'], function (breads, fillings){ return breads.breads + ' '+ fillings.fillings });
+      librarySystem('breads', [], function (){ return {breads:'breadLibrary'} });
+      librarySystem('fillings', [], function (){ return {fillings:'fillingsLibrary'} });
+        eq(librarySystem('sandwich'),'breadLibrary fillingsLibrary');
+        deleteLibrarySystem();
+    },
+    'the callback should only run once per library': function(){
+      var counter=0;
+      librarySystem('counter', [], function (){
+        counter++ ;
+        return 'counter' });
+      librarySystem('counter');
+      librarySystem('counter');
+      eq(counter,1);
+      deleteLibrarySystem();
+    },
+    'the callback should only run once per library when loaded before dependencies (out of order)': function(){
+      var counter=0;
+      librarySystem('sandwich', ['breads', 'fillings'], function (breads, fillings){ counter ++; return breads.breads + ' '+ fillings.fillings });
+      librarySystem('breads', [], function (){ return {breads:'breadLibrary'} });
+      librarySystem('fillings', [], function (){ return {fillings:'fillingsLibrary'} });
+      librarySystem('sandwich');
+      librarySystem('sandwich');
+      eq(counter,1);
+      deleteLibrarySystem();
+    },
+});
+</script>
